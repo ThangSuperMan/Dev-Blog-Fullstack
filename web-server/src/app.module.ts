@@ -1,17 +1,25 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TodoModule } from './todo/todo.module';
+import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
+      validationSchema: Joi.object({
+        MONGODB_URI: Joi.string().required(),
+      }),
       envFilePath: '.development.env',
     }),
     TodoModule,
-    MongooseModule.forRoot(process.env.MONGO_URL),
+    UserModule,
+    // TODO: need to migrate to the scalebility and continuesly mongodb with docker
+    MongooseModule.forRoot(process.env.MONGODB_URI),
+    // MongooseModule.forRoot('mongodb://localhost/indeed'),
   ],
   controllers: [AppController],
   providers: [AppService],
