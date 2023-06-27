@@ -15,7 +15,7 @@ export class Todo {
   completedAt?: Date;
 
   @Prop({ required: true })
-  createdAt: string;
+  createdAt: Date;
 
   @Prop()
   deletedAt?: Date;

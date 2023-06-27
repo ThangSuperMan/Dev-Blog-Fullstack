@@ -8,7 +8,6 @@ import { InjectModel } from '@nestjs/mongoose';
 @Injectable()
 export class TodoService {
   constructor(
-    // Connect from the scheme in mongodb to the model in typescript property
     @InjectModel(Todo.name) private readonly model: Model<TodoDocument>,
   ) {}
 
