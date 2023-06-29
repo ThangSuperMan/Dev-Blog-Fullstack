@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from './schema/user.schema';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,8 +10,13 @@ export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async getUserById(userId: string): Promise<User> {
-    console.log('UsersService getUserById');
+    Logger.log('UsersService getUserById');
     return this.usersRepository.findOne({ userId });
+  }
+
+  async getUserByEmail(email: string): Promise<User> {
+    Logger.log('UsersService getUserByEmail');
+    return this.usersRepository.findOne({ email });
   }
 
   async getUsers(): Promise<User[]> {
@@ -21,6 +26,7 @@ export class UsersService {
   async createUser(user: CreateUserDto): Promise<User> {
     return this.usersRepository.create({
       userId: uuidv4(),
+      username: user.username,
       email: user.email,
       password: user.password,
       age: user.age,

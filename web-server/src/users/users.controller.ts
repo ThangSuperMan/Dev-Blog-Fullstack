@@ -10,6 +10,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Controller('users')
 export class UsersController {
@@ -27,17 +28,25 @@ export class UsersController {
     return this.usersService.getUserById(userId);
   }
 
-  @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
-    Logger.log('UsersController create new user');
-    const updatedAt: Date = new Date();
-    createUserDto.createddAt = updatedAt;
-    return await this.usersService.createUser(createUserDto);
-  }
+  // @Post('/signup')
+  // async createUser(@Body() createUserDto: CreateUserDto) {
+  //   Logger.log('UsersController createUser method');
+  //   const saltOrRounds = 10;
+  //   const hashedPassword = await bcrypt.hash(
+  //     createUserDto.password,
+  //     saltOrRounds,
+  //   );
+
+  //   createUserDto.createddAt = new Date();
+  //   createUserDto.password = hashedPassword;
+
+  //   const result = await this.usersService.createUser(createUserDto);
+  //   return result;
+  // }
 
   @Put(':id')
   async update(@Body('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    Logger.log('UserController update todo');
+    Logger.log('UserController update user');
     const currentTime: Date = new Date();
     updateUserDto.updatedAt = currentTime;
     return await this.usersService.updateUser(id, updateUserDto);
