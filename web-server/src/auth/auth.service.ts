@@ -2,7 +2,6 @@ import {
   Injectable,
   Logger,
   NotAcceptableException,
-  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
@@ -42,6 +41,15 @@ export class AuthService {
     return await bcrypt.compare(password, storePasswordHash);
   }
 
+  setCookie(response: Response, refreshToken: string) {
+    response.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      path: '/',
+      sameSite: 'strict',
+    });
+  }
+
   async signIn(user: Partial<User>, response: Response) {
     Logger.log('signIn');
     const payload: AuthPayload = {
@@ -62,14 +70,7 @@ export class AuthService {
     if (!passwordIsValid) throw new UnauthorizedException();
 
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    // Set cookie
-    response.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      path: '/',
-      sameSite: 'strict',
-    });
+    this.setCookie(response, refreshToken);
 
     return {
       access_token: this.jwtService.sign(payload),
