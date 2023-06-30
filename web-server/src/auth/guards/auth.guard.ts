@@ -3,7 +3,6 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -26,24 +25,16 @@ export class AuthGuard implements CanActivate {
 
   private async getAccessTokenBasedOnJwtId(jwtId: string): Promise<string> {
     console.log('getAccessTokenBasedOnJwtId');
-    const accessToken: string = await this.cacheManager.get(
-      `access_token_${jwtId}`,
-    );
+    const accessToken: string = await this.cacheManager.get(`jwt_id_${jwtId}`);
     return accessToken;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-
-    // const token = this.extractTokenFromHeader(request);
     const jwtId = this.extractJwtIdFromCookie(request);
-    console.log('jwtId :>> ', jwtId);
-
     const token = await this.getAccessTokenBasedOnJwtId(jwtId);
-    console.log('accessToken  :>> ', token);
 
     if (!jwtId || !token) {
-      Logger.log('We does not have jwtId');
       throw new UnauthorizedException();
     }
 

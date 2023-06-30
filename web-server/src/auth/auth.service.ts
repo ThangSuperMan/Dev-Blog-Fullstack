@@ -78,10 +78,7 @@ export class AuthService {
     const cachedCounter: string = await this.cacheManager.get('counter');
     await this.cacheManager.set('counter', `${cachedCounter + 1}`);
     const accessToken = this.jwtService.sign(payload);
-    await this.cacheManager.set(
-      `access_token_${cachedCounter + 1}`,
-      accessToken,
-    );
+    await this.cacheManager.set(`jwt_id_${cachedCounter + 1}`, accessToken);
 
     this.setCookie(response, cachedCounter);
 
