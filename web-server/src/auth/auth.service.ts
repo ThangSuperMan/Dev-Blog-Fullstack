@@ -1,9 +1,12 @@
 import {
+  Inject,
   Injectable,
   Logger,
   NotAcceptableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthPayload } from './interfaces/auth-payload.interface';
@@ -16,6 +19,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User> | null {
@@ -41,8 +45,8 @@ export class AuthService {
     return await bcrypt.compare(password, storePasswordHash);
   }
 
-  setCookie(response: Response, refreshToken: string) {
-    response.cookie('refresh_token', refreshToken, {
+  setCookie(response: Response, cachedCounter: string) {
+    response.cookie('jwt_id', cachedCounter + 1, {
       httpOnly: true,
       secure: false,
       path: '/',
@@ -51,7 +55,7 @@ export class AuthService {
   }
 
   async signIn(user: Partial<User>, response: Response) {
-    Logger.log('signIn');
+    Logger.log('-----------------> signIn <--------------------');
     const payload: AuthPayload = {
       email: user.email,
       sub: user.userId,
@@ -69,11 +73,20 @@ export class AuthService {
 
     if (!passwordIsValid) throw new UnauthorizedException();
 
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-    this.setCookie(response, refreshToken);
+    // const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    const cachedCounter: string = await this.cacheManager.get('counter');
+    await this.cacheManager.set('counter', `${cachedCounter + 1}`);
+    const accessToken = this.jwtService.sign(payload);
+    await this.cacheManager.set(
+      `access_token_${cachedCounter + 1}`,
+      accessToken,
+    );
+
+    this.setCookie(response, cachedCounter);
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
     };
   }
 }

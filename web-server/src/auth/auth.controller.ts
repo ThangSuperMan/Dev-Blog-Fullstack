@@ -30,6 +30,11 @@ export class AuthController {
     private usersService: UsersService,
   ) {}
 
+  @Get('')
+  index() {
+    return 'Hello from auth route';
+  }
+
   @HttpCode(HttpStatus.OK)
   @Post('signup')
   async signUp(@Body() createUserDto: CreateUserDto) {
