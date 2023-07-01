@@ -6,11 +6,6 @@ import { Cache } from 'cache-manager';
 export class AppService {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
-  async setupStoreJwtInRedis() {
-    // TODO:
-    await this.cacheManager.set('counter', 0);
-  }
-
   async getHello() {
     // const ttl = 10;
     // await this.cacheManager.set('cached_item', { key: 32 }, ttl);
@@ -20,6 +15,6 @@ export class AppService {
     await this.cacheManager.set('myname', 'Thang Cute');
     const cachedItem = await this.cacheManager.get('myname');
     console.log('cached_item :>> ', cachedItem);
-    return 'Hello World!';
+    return 'Hello World!'.repeat(1000);
   }
 }

@@ -29,12 +29,14 @@ export class UsersService {
       username: user.username,
       email: user.email,
       password: user.password,
-      age: user.age,
       createdAt: user.createddAt,
     });
   }
 
-  async updateUser(userId: string, userUpdates: UpdateUserDto): Promise<User> {
+  async updateUser(
+    userId: string,
+    userUpdates: Partial<UpdateUserDto>,
+  ): Promise<User> {
     return this.usersRepository.findOneAndUpdate({ userId }, userUpdates);
   }
 }

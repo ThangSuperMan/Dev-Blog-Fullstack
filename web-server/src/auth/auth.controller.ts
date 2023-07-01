@@ -13,15 +13,11 @@ import {
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
 import { User } from 'src/users/schema/user.schema';
-import { Response } from 'express';
+import { FastifyReply } from 'fastify';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
-
-interface SignInDto {
-  email: string;
-  password: string;
-}
+import { SignInDto } from './interfaces/signin-dto.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -38,6 +34,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('signup')
   async signUp(@Body() createUserDto: CreateUserDto) {
+    // TODO: Need to refactor this block to service
     Logger.log('signUp method');
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(
@@ -55,7 +52,7 @@ export class AuthController {
   @Post('signin')
   async signIn(
     @Body() signInDto: SignInDto,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) response: FastifyReply,
   ): Promise<{ access_token: string }> {
     Logger.log('auth/signIn signIn method');
     const user: Partial<User> = {
@@ -64,6 +61,11 @@ export class AuthController {
     };
 
     return this.authService.signIn(user, response);
+  }
+
+  @Post('refresh')
+  async refreshToken(@Res({ passthrough: true }) reply: FastifyReply) {
+    this.authService.refreshToken(reply);
   }
 
   @UseGuards(AuthGuard)

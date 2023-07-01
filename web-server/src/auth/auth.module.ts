@@ -14,8 +14,8 @@ import { AuthService } from './auth.service';
     UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '3600s' },
+      secret: process.env.JWT_SECRET_KEY,
+      // signOptions: { expiresIn: '3600s' },
     }),
   ],
   providers: [AuthService],

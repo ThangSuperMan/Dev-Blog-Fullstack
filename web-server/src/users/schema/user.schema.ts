@@ -25,9 +25,6 @@ export class User {
 
   @Prop([String])
   favoriteFoods?: string[];
-
-  @Prop()
-  refreshToknen: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
