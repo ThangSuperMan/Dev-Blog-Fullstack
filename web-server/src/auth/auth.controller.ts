@@ -1,22 +1,20 @@
 import {
-  Controller,
-  Post,
-  UseGuards,
-  Logger,
-  Request,
-  Get,
-  HttpCode,
-  HttpStatus,
   Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Req,
+  Request,
   Res,
+  UseGuards,
 } from '@nestjs/common';
+import { FastifyReply, FastifyRequest } from 'fastify';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { User } from 'src/users/schema/user.schema';
+import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './guards/auth.guard';
-import { User } from 'src/users/schema/user.schema';
-import { FastifyReply } from 'fastify';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcrypt';
 import { SignInDto } from './interfaces/signin-dto.interface';
 
 @Controller('auth')
@@ -31,24 +29,12 @@ export class AuthController {
     return 'Hello from auth route';
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post('signup')
   async signUp(@Body() createUserDto: CreateUserDto) {
-    // TODO: Need to refactor this block to service
-    Logger.log('signUp method');
-    const saltOrRounds = 10;
-    const hashedPassword = await bcrypt.hash(
-      createUserDto.password,
-      saltOrRounds,
-    );
-    createUserDto.createddAt = new Date();
-    createUserDto.password = hashedPassword;
-
     const result = await this.usersService.createUser(createUserDto);
     return result;
   }
 
-  @HttpCode(HttpStatus.OK)
   @Post('signin')
   async signIn(
     @Body() signInDto: SignInDto,
@@ -64,8 +50,11 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refreshToken(@Res({ passthrough: true }) reply: FastifyReply) {
-    this.authService.refreshToken(reply);
+  async refreshToken(
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    this.authService.refreshToken(req, reply);
   }
 
   @UseGuards(AuthGuard)

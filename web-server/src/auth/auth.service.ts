@@ -11,7 +11,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthPayload } from './interfaces/auth-payload.interface';
 import { User } from 'src/users/schema/user.schema';
-import { FastifyReply } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import * as bcrypt from 'bcrypt';
 import constants from './constants/index';
 
@@ -55,25 +55,109 @@ export class AuthService {
     });
   }
 
-  isValidRefreshToken(
-    refreshTokenFromDB: string,
-    refreshTokenFromCookie: string,
-  ): boolean {
-    return refreshTokenFromDB === refreshTokenFromCookie;
+  async getCachedCounterJwtAccessAndRefreshToken(): Promise<{
+    cachedCounterForAccesstoken: string;
+    cachedCounterForRefreshtoken: string;
+  }> {
+    let cachedCounterForAccesstoken: string = await this.cacheManager.get(
+      'counter_for_access_token',
+    );
+    let cachedCounterForRefreshToken: string = await this.cacheManager.get(
+      'counter_for_refresh_token',
+    );
+
+    return {
+      cachedCounterForAccesstoken: cachedCounterForAccesstoken,
+      cachedCounterForRefreshtoken: cachedCounterForRefreshToken,
+    };
   }
 
-  async refreshToken(reply: FastifyReply) {
+  async setCachedCounterJwtAccessAndRefreshToken() {
+    const { cachedCounterForAccesstoken, cachedCounterForRefreshtoken } =
+      await this.getCachedCounterJwtAccessAndRefreshToken();
+
+    await this.cacheManager.set(
+      'counter_for_access_token',
+      cachedCounterForAccesstoken + 1,
+    );
+    await this.cacheManager.set(
+      'counter_for_refresh_token',
+      cachedCounterForRefreshtoken + 1,
+    );
+  }
+
+  async setJwtAccessTokenAndRefreshTokenForRedis(
+    accessToken: string,
+    refreshToken: string,
+  ) {
+    const { cachedCounterForAccesstoken, cachedCounterForRefreshtoken } =
+      await this.getCachedCounterJwtAccessAndRefreshToken();
+
+    this.setCachedCounterJwtAccessAndRefreshToken();
+
+    await this.cacheManager.set(
+      `jwt_access_token_id_${cachedCounterForAccesstoken + 1}`,
+      accessToken,
+      { ttl: constants.ONE_HOUR_IN_MILISECONDS },
+    );
+    await this.cacheManager.set(
+      `jwt_refresh_token_id_${cachedCounterForRefreshtoken + 1}`,
+      refreshToken,
+      { ttl: constants.SEVEN_DAYS_IN_MILISECONDS },
+    );
+  }
+
+  async refreshToken(req: FastifyRequest, reply: FastifyReply) {
     Logger.log('-----------------> refreshToken service <--------------------');
 
-    // get refresh token id from the cookie
-    // get the refresh token from redis
-    // validate if the refresh token is valid
-    // if the refresh token valid -> create a new refresh token and access token and
-    // send back to client's cookie
+    const jwtRefreshTokenId = req.cookies['jwt_refresh_token_id'];
+    const refreshTokenFromRedis: string = await this.cacheManager.get(
+      `jwt_refresh_token_id_${jwtRefreshTokenId}`,
+    );
+
+    let payload: any;
+
+    try {
+      payload = await this.jwtService.verifyAsync(refreshTokenFromRedis, {
+        secret: process.env.JWT_SECRET_KEY,
+      });
+      const user = await this.usersService.getUserByEmail(payload.email);
+      payload = {
+        sub: user.userId,
+        email: user.email,
+      };
+    } catch (error: any) {
+      Logger.error('error :>> ', error);
+      reply.status(401).send('Your token is invalid');
+    }
+
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    this.setJwtAccessTokenAndRefreshTokenForRedis(accessToken, refreshToken);
+
+    const { cachedCounterForAccesstoken, cachedCounterForRefreshtoken } =
+      await this.getCachedCounterJwtAccessAndRefreshToken();
+    const accessTokenKey = 'jwt_access_token_id';
+    const refreshTokenKey = 'jwt_refresh_token_id';
+    this.setCookie(reply, accessTokenKey, cachedCounterForAccesstoken + 1);
+    this.setCookie(reply, refreshTokenKey, cachedCounterForRefreshtoken + 1);
+    this.setCachedCounterJwtAccessAndRefreshToken();
+
+    reply
+      .status(200)
+      .send(
+        'You token is valid, now you can receive from us the new access token and refresh token',
+      );
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
   }
 
-  async signIn(user: Partial<User>, response: FastifyReply) {
-    Logger.log('-----------------> signIn <--------------------');
+  async signIn(user: Partial<User>, reply: FastifyReply) {
+    Logger.log('-----------------> signIn service <--------------------');
 
     const payload: AuthPayload = {
       email: user.email,
@@ -99,40 +183,16 @@ export class AuthService {
       'counter_for_refresh_token',
     );
 
-    await this.cacheManager.set(
-      'counter_for_access_token',
-      cachedCounterForAccesstoken + 1,
-    );
-
-    await this.cacheManager.set(
-      'counter_for_refresh_token',
-      cachedCounterForRefreshToken + 1,
-    );
-
-    console.log('counter_for_access_token :>> ', cachedCounterForAccesstoken);
-    console.log('counter_for_refresh_token :>> ', cachedCounterForRefreshToken);
-
+    this.setCachedCounterJwtAccessAndRefreshToken();
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '1d' });
-
-    await this.cacheManager.set(
-      `jwt_access_token_id_${cachedCounterForAccesstoken + 1}`,
-      accessToken,
-      { ttl: constants.ONE_HOUR_IN_MILISECONDS },
-    );
-    await this.cacheManager.set(
-      `jwt_refresh_token_id_${cachedCounterForRefreshToken + 1}`,
-      refreshToken,
-      { ttl: constants.SEVEN_DAYS_IN_MILISECONDS },
-    );
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    this.setJwtAccessTokenAndRefreshTokenForRedis(accessToken, refreshToken);
 
     const accessTokenKey = 'jwt_access_token_id';
     const refreshTokenKey = 'jwt_refresh_token_id';
+    this.setCookie(reply, accessTokenKey, cachedCounterForAccesstoken + 1);
+    this.setCookie(reply, refreshTokenKey, cachedCounterForRefreshToken + 1);
 
-    this.setCookie(response, accessTokenKey, cachedCounterForAccesstoken + 1);
-    this.setCookie(response, refreshTokenKey, cachedCounterForRefreshToken + 1);
-
-    // Only show for testing
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
