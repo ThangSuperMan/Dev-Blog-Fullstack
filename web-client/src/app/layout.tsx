@@ -1,9 +1,9 @@
-import Navbar from '@/components/Navbar';
 import { Inter } from 'next/font/google';
 import React from 'react';
+import Navbar from '@/components/Navbar';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+// const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'Create Next App',
@@ -17,7 +17,7 @@ interface Props {
 const RootLayout: React.FC<Props> = ({ children }) => {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="mt-14">
         <Navbar />
         {children}
       </body>
