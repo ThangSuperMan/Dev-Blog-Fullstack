@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Logger,
   Post,
   Req,
@@ -11,11 +13,12 @@ import {
 } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { User } from 'src/users/schema/user.schema';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
-import { AuthGuard } from './guards/auth.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard as AuthGuardCommon } from './guards/auth.guard';
 import { SignInDto } from './interfaces/signin-dto.interface';
+import { User } from 'src/users/schema/user.schema';
 
 @Controller('auth')
 export class AuthController {
@@ -24,9 +27,16 @@ export class AuthController {
     private usersService: UsersService,
   ) {}
 
-  @Get('')
-  index() {
-    return 'Hello from auth route';
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req: any) {
+    return 'google login';
+  }
+
+  @Get('google/redirect')
+  @UseGuards(AuthGuard('google'))
+  googleAuthRedirect(@Req() req: any) {
+    return this.authService.googleLogin(req);
   }
 
   @Post('signup')
@@ -49,6 +59,22 @@ export class AuthController {
     return this.authService.signIn(user, response);
   }
 
+  @Get('/facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLogin(): Promise<any> {
+    return HttpStatus.OK;
+  }
+
+  @Get('/facebook/redirect')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookLoginRedirect(@Req() req: any): Promise<any> {
+    console.log('req. :>> ', req.user);
+    return {
+      statusCode: HttpStatus.OK,
+      user: req.user,
+    };
+  }
+
   @Post('refresh')
   async refreshToken(
     @Req() req: FastifyRequest,
@@ -57,7 +83,7 @@ export class AuthController {
     this.authService.refreshToken(req, reply);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuardCommon)
   @Get('profile')
   getProfile(@Request() req: any): any {
     Logger.log('getProfile');

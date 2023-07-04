@@ -5,11 +5,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { RedisClientOptions } from 'redis';
+import { AuthModule } from './auth/auth.module';
+import { GoogleStrategy } from './auth/strategies/google.strategy';
+import constants from './constants/index';
 import * as Joi from 'joi';
 import * as redisStore from 'cache-manager-redis-store';
-import { RedisClientOptions } from 'redis';
-import constants from './constants/index';
-import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -18,6 +19,11 @@ import { AuthModule } from './auth/auth.module';
         APP_PORT: Joi.number().required(),
         MONGODB_URI: Joi.string().required(),
         JWT_SECRET_KEY: Joi.string().required(),
+        // TODO: still mantian this feature
+        FACEBOOK_APP_ID: Joi.number().required(),
+        FACEBOOK_APP_SECRET: Joi.string().required(),
+        GOOGLE_CLIENT_ID: Joi.string().required(),
+        GOOGLE_CLIENT_SECRET: Joi.string().required(),
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().required(),
         REDIS_PASSWORD: Joi.string().required(),
@@ -43,6 +49,8 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController],
   providers: [
     AppService,
+    GoogleStrategy,
+    // FacebookStrategy,
     // {
     //   provide: APP_INTERCEPTOR,
     //   useClass: CacheInterceptor,

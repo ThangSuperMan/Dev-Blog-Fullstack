@@ -23,6 +23,18 @@ export class AuthService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
+  googleLogin(req: any) {
+    Logger.log('-----------------> googleLogin service <--------------------');
+    if (!req.user) {
+      return 'No user from google';
+    }
+
+    return {
+      message: 'User information from google',
+      user: req.user,
+    };
+  }
+
   async validateUser(email: string, password: string): Promise<User> | null {
     const user = await this.usersService.getUserByEmail(email);
 
@@ -59,10 +71,10 @@ export class AuthService {
     cachedCounterForAccesstoken: string;
     cachedCounterForRefreshtoken: string;
   }> {
-    let cachedCounterForAccesstoken: string = await this.cacheManager.get(
+    const cachedCounterForAccesstoken: string = await this.cacheManager.get(
       'counter_for_access_token',
     );
-    let cachedCounterForRefreshToken: string = await this.cacheManager.get(
+    const cachedCounterForRefreshToken: string = await this.cacheManager.get(
       'counter_for_refresh_token',
     );
 
@@ -176,10 +188,10 @@ export class AuthService {
 
     if (!passwordIsValid) throw new UnauthorizedException();
 
-    let cachedCounterForAccesstoken: string = await this.cacheManager.get(
+    const cachedCounterForAccesstoken: string = await this.cacheManager.get(
       'counter_for_access_token',
     );
-    let cachedCounterForRefreshToken: string = await this.cacheManager.get(
+    const cachedCounterForRefreshToken: string = await this.cacheManager.get(
       'counter_for_refresh_token',
     );
 
