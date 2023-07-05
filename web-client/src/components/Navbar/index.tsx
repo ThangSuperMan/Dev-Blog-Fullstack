@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import Notification from '@/components/Icons/Notification';
 import Search from '@/components/Icons/Search';
 import Logo from '@/components/Logo';
@@ -40,9 +41,11 @@ const Navbar: React.FC = () => {
           </div>
         ) : (
           <div>
-            <button className="h-10 py-[7px] px-[15px] mr-2 rounded-[6px] hover:bg-indigo-100 hover:text-indigo-700">
-              Log in
-            </button>
+            <Link href="/enter">
+              <button className="h-10 py-[7px] px-[15px] mr-2 rounded-[6px] hover:bg-indigo-100 hover:text-indigo-700">
+                Log in
+              </button>
+            </Link>
             <button className="btn-primary">Create account</button>
           </div>
         )}
