@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import uuid from '../utils/uuid';
 import { User } from './schema/user.schema';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersRepository } from './users.repository';
@@ -34,7 +34,7 @@ export class UsersService {
     user.password = hashedPassword;
 
     return this.usersRepository.create({
-      userId: uuidv4(),
+      userId: uuid(),
       username: user.username,
       email: user.email,
       password: user.password,

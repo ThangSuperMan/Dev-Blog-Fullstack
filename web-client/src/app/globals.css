@@ -14,12 +14,24 @@ body {
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
+.react-tel-input .form-control {
+  @apply !w-full py-6 !text-base;
+}
+
 @layer components {
   .btn-primary {
     @apply h-10 outline outline-1 rounded-[6px] outline-indigo-400 px-[15px] py-[7px] mr-2 cursor-pointer hover:underline hover:text-white hover:bg-indigo-700;
   }
 
   .btn-social {
-    @apply w-full bg-google-brand flex justify-center items-center pl-3 pr-5 py-3 rounded-[6px];
+    @apply w-full bg-google-brand flex justify-center items-center px-3 pr-5 py-3 rounded-[6px];
+  }
+
+  .otp-container {
+    @apply w-full flex justify-between gap-2;
+  }
+
+  .opt-container input {
+    @apply !mr-0 flex-1 py-5 outline-none;
   }
 }

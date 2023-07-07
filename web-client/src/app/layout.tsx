@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import './globals.css';
+import { Toaster } from 'react-hot-toast';
 
 // const inter = Inter({ subsets: ['latin'] });
 
@@ -18,6 +19,7 @@ const RootLayout: React.FC<Props> = ({ children }) => {
   return (
     <html lang="en">
       <body className="mt-14">
+        <Toaster toastOptions={{ duration: 4000 }} />
         <Navbar />
         {children}
       </body>
